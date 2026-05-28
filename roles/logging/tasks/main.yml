@@ -1,0 +1,48 @@
+---
+- name: Install rsyslog
+  ansible.builtin.dnf:
+    name: rsyslog
+    state: present
+
+- name: Enable and start rsyslog
+  ansible.builtin.systemd:
+    name: rsyslog
+    enabled: true
+    state: started
+
+- name: Configure servera to receive TCP logs on port 514
+  ansible.builtin.template:
+    src: rsyslog-servera.conf.j2
+    dest: /etc/rsyslog.d/10-servera-receiver.conf
+    owner: root
+    group: root
+    mode: '0644'
+  when: inventory_hostname == 'servera'
+  notify: restart rsyslog
+
+- name: Configure serverb to forward all logs to servera
+  ansible.builtin.template:
+    src: rsyslog-serverb.conf.j2
+    dest: /etc/rsyslog.d/10-serverb-forward.conf
+    owner: root
+    group: root
+    mode: '0644'
+  when: inventory_hostname == 'serverb'
+  notify: restart rsyslog
+
+- name: Ensure remote log directory exists on servera
+  ansible.builtin.file:
+    path: "{{ remote_log_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  when: inventory_hostname == 'servera'
+
+- name: Open syslog port on servera
+  ansible.posix.firewalld:
+    port: "{{ syslog_port }}/tcp"
+    permanent: true
+    immediate: true
+    state: enabled
+  when: inventory_hostname == 'servera'

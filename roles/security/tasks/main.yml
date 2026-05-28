@@ -1,0 +1,19 @@
+---
+- name: Ensure firewalld is enabled and running
+  ansible.builtin.service:
+    name: firewalld
+    state: started
+    enabled: true
+
+- name: Ensure SELinux is enforcing
+  ansible.builtin.selinux:
+    policy: targeted
+    state: enforcing
+
+- name: Allow NFS exports through SELinux
+  ansible.posix.seboolean:
+    name: nfs_export_all_rw
+    state: true
+    persistent: true
+  when: inventory_hostname == nfs_server
+

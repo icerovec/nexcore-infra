@@ -1,0 +1,19 @@
+---
+- name: Install NFS client packages
+  ansible.builtin.dnf:
+    name: nfs-utils
+    state: present
+
+- name: Create shared mount directory
+  ansible.builtin.file:
+    path: "{{ shared_mount }}"
+    state: directory
+
+- name: Mount shared NFS share
+  ansible.builtin.mount:
+    path: "{{ shared_mount }}"
+    src: "{{ hostvars['serverb']['ansible_default_ipv4']['address'] }}:{{ shared_mount }}"
+    fstype: nfs
+    opts: defaults
+    state: mounted
+  when: inventory_hostname != 'serverb'

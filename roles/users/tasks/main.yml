@@ -1,0 +1,40 @@
+---
+- name: Ensure company groups exist
+  ansible.builtin.group:
+    name: "{{ item.groups }}"
+    state: present
+  loop: "{{ nexcore_users }}"
+
+- name: Ensure provisioned users exist on every managed host
+  ansible.builtin.user:
+    name: "{{ item.name }}"
+    groups: "{{ item.groups }}"
+    append: true
+    create_home: true
+    shell: /bin/bash
+  loop: "{{ nexcore_users }}"
+
+- name: Install SSH public keys for provisioned users
+  ansible.posix.authorized_key:
+    user: "{{ item.name }}"
+    key: "{{ nexcore_user_ssh_public_keys[item.name] }}"
+    state: present
+  loop: "{{ nexcore_users }}"
+
+- name: Configure sudo access for ops
+  ansible.builtin.copy:
+    dest: "/etc/sudoers.d/{{ item.name }}"
+    content: "{{ item.name }} ALL=(ALL) NOPASSWD:ALL\n"
+    owner: root
+    group: root
+    mode: '0440'
+    validate: '/usr/sbin/visudo -cf %s'
+  when: item.sudo
+  loop: "{{ nexcore_users }}"
+
+- name: Disable password authentication
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^PasswordAuthentication'
+    line: 'PasswordAuthentication no'
+  notify: restart sshd

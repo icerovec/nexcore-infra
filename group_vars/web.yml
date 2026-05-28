@@ -1,0 +1,10 @@
+---
+wordpress_site_url: "http://www.{{ nexcore_domain }}"
+wordpress_download_url: https://wordpress.org/latest.tar.gz
+
+wiki_site_url: "http://wiki.{{ nexcore_domain }}"
+mediawiki_download_url: https://releases.wikimedia.org/mediawiki/1.41/mediawiki-1.41.0.tar.gz
+
+
+
+

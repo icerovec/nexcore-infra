@@ -1,0 +1,14 @@
+<?php
+$wgSitename = "NexCore Wiki";
+$wgServer = "{{ wiki_site_url }}";
+$wgScriptPath = "";
+$wgDBtype = "mysql";
+$wgDBserver = "{{ hostvars['serverb'].ansible_default_ipv4.address }}";
+$wgDBname = "{{ wiki_db }}";
+$wgDBuser = "{{ wiki_db_user }}";
+$wgDBpassword = "{{ wiki_db_password }}";
+$wgMainCacheType = CACHE_NONE;
+$wgEnableEmail = true;
+$wgEmergencyContact = "ops01@{{ nexcore_domain }}";
+$wgPasswordSender = "wiki@{{ nexcore_domain }}";
+$wgShowExceptionDetails = true;

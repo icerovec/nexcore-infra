@@ -1,0 +1,11 @@
+<VirtualHost *:80>
+    ServerName www.{{ nexcore_domain }}
+    DocumentRoot "{{ web_root_www }}"
+    <Directory "{{ web_root_www }}">
+        AllowOverride All
+        Require all granted
+    </Directory>
+    ErrorLog /var/log/httpd/wordpress-error.log
+    CustomLog /var/log/httpd/wordpress-access.log combined
+</VirtualHost>
+

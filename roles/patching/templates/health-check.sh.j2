@@ -1,0 +1,15 @@
+#!/bin/bash
+
+REPORT=$(mktemp)
+
+{
+  echo "Hostname: $(hostname)"
+  echo "Uptime: $(uptime -p)"
+  echo "Disk usage:"
+  df -h
+  echo "-----"
+} | tee -a {{ health_log }} > "$REPORT"
+
+mail -s "NexCore Daily Health Report - $(hostname)" ops01@{{ nexcore_domain }} < "$REPORT"
+
+rm -f "$REPORT"

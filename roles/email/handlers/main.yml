@@ -1,0 +1,10 @@
+---
+- name: restart postfix
+  ansible.builtin.service:
+    name: postfix
+    state: restarted
+
+- name: run newaliases
+  ansible.builtin.command: newaliases
+  changed_when: false
+

@@ -1,0 +1,9 @@
+module(load="imtcp")
+input(type="imtcp" port="{{ syslog_port }}")
+
+template(name="RemoteServerbLog" type="string" string="{{ remote_log_dir }}/serverb.log")
+
+if $fromhost-ip == "{{ hostvars['serverb']['ansible_default_ipv4']['address'] }}" then {
+    action(type="omfile" dynaFile="RemoteServerbLog")
+    stop
+}

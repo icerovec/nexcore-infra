@@ -1,0 +1,4 @@
+---
+mail_packages:
+  - postfix
+  - s-nail

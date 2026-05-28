@@ -1,0 +1,36 @@
+---
+- name: Install and configure DNS server
+  block:
+    - name: Install DNS server
+      ansible.builtin.dnf:
+        name: 
+          - bind
+          - bind-utils
+        state: present
+
+    - name: Deploy named.conf
+      ansible.builtin.template:
+        src: named.conf.j2
+        dest: /etc/named.conf
+
+    - name: Deploy zone file for nexcore zone
+      ansible.builtin.template:
+        src: nexcore.local.zone.j2
+        dest: "/var/named/{{ nexcore_domain }}.zone"
+      notify: restart named
+
+    - name: Open DNS service in firewall
+      ansible.posix.firewalld:
+        service: dns
+        permanent: true
+        state: enabled
+        immediate: true
+
+    - name: Enable DNS service
+      ansible.builtin.service:
+        name: named
+        enabled: true
+        state: started
+  when: inventory_hostname == 'servera'
+
+

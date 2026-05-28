@@ -1,0 +1,89 @@
+---
+- name: Install NFS and LVM packages
+  ansible.builtin.dnf:
+    name: "{{ storage_packages }}"
+    state: present
+
+- name: Create volume group on dedicated device
+  community.general.lvg:
+    vg: "{{ shared_vg }}"
+    pvs: "{{ shared_disk }}"
+    state: present
+
+- name: Create logical volume
+  community.general.lvol:
+    vg: "{{ shared_vg }}"
+    lv: "{{ shared_lv }}"
+    size: "{{ shared_lv_size }}"
+    state: present
+
+- name: Create filesystem
+  ansible.builtin.filesystem:
+    fstype: xfs
+    dev: "/dev/{{ shared_vg }}/{{ shared_lv }}"
+    state: present
+
+- name: Create mountpoint
+  ansible.builtin.file:
+    path: "{{ shared_mount }}"
+    state: directory
+    owner: root
+    group: dev
+    mode: '0770'
+
+- name: Mount shared volume
+  ansible.builtin.mount:
+    path: "{{ shared_mount }}"
+    src: "/dev/{{ shared_vg }}/{{ shared_lv }}"
+    fstype: xfs
+    opts: defaults
+    state: mounted
+
+- name: Create users directory for NFS export
+  ansible.builtin.file:
+    path: "{{ shared_mount }}/users"
+    state: directory
+    owner: root
+    group: dev
+    mode: '0770'
+
+- name: Configure NFS export
+  ansible.builtin.lineinfile:
+    path: /etc/exports
+    line: "{{ shared_mount }} *(rw,sync)"
+    create: true
+  notify: restart nfs
+
+- name: Enable and start NFS server
+  ansible.builtin.service:
+    name: nfs-server
+    state: started
+    enabled: true
+
+- name: Export NFS shares
+  ansible.builtin.command:
+    cmd: exportfs -rav
+  changed_when: false
+
+- name: Allow NFS exports through SELinux
+  ansible.posix.seboolean:
+    name: nfs_export_all_rw
+    state: true
+    persistent: true
+
+- name: Enable NFS service in firewall
+  ansible.posix.firewalld:
+    service: nfs
+    permanent: true
+    state: enabled
+    immediate: true
+
+- name: Create per-user NFS subdirectories
+  ansible.builtin.file:
+    path: "{{ shared_mount }}/users/{{ item.name }}"
+    state: directory
+    owner: "{{ item.name }}"
+    group: "{{ item.groups }}"
+    mode: '0700'
+  loop: "{{ nexcore_users }}"
+

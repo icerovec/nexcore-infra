@@ -1,0 +1,120 @@
+---
+- name: Install Apache and PHP
+  ansible.builtin.dnf:
+    name: "{{ apache_packages }}" 
+    state: present
+
+- name: Ensure website document roots exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: apache
+    group: apache
+    mode: '0755'
+  loop:
+    - "{{ web_root_www }}"
+    - "{{ web_root_wiki }}"
+
+- name: Download WordPress
+  ansible.builtin.get_url:
+    url: "{{ wordpress_download_url }}"
+    dest: /tmp/wordpress.tar.gz
+    mode: '0644'
+
+- name: Download MediaWiki
+  ansible.builtin.get_url:
+    url: "{{ mediawiki_download_url }}"
+    dest: /tmp/mediawiki.tar.gz
+    mode: '0644'
+
+- name: Extract WordPress into document root
+  ansible.builtin.unarchive:
+    src: /tmp/wordpress.tar.gz
+    dest: "{{ web_root_www }}"
+    remote_src: true
+    extra_opts:
+      - --strip-components=1
+    creates: "{{ web_root_www }}/wp-settings.php"
+
+- name: Extract MediaWiki into document root
+  ansible.builtin.unarchive:
+    src: /tmp/mediawiki.tar.gz
+    dest: "{{ web_root_wiki }}"
+    remote_src: true
+    extra_opts:
+      - --strip-components=1
+    creates: "{{ web_root_wiki }}/index.php"
+
+
+- name: Create WordPress config
+  ansible.builtin.template:
+    src: wp-config.php.j2
+    dest: "{{ web_root_www }}/wp-config.php"
+    owner: apache
+    group: apache
+    mode: '0640'
+
+
+- name: Configure Apache virtual hosts
+  ansible.builtin.template:
+    src: "{{ item.src }}"
+    dest: "/etc/httpd/conf.d/{{ item.dest }}"
+    owner: root
+    group: root
+    mode: '0644'
+  loop:
+    - { src: 'wordpress-vhost.conf.j2', dest: 'wordpress.conf' }
+    - { src: 'wiki-vhost.conf.j2', dest: 'wiki.conf' }
+  notify: restart httpd
+
+- name: Label WordPress content for Apache
+  #ansible.posix.sefcontext:
+  community.general.sefcontext:
+    target: "{{ web_root_www }}(/.*)?"
+    setype: httpd_sys_rw_content_t
+    state: present
+
+- name: Label MediaWiki content for Apache
+  #ansible.posix.sefcontext:
+  community.general.sefcontext:
+    target: "{{ web_root_wiki }}(/.*)?"
+    setype: httpd_sys_rw_content_t
+    state: present
+
+- name: Allow Apache to talk to remote MariaDB
+  ansible.posix.seboolean:
+    name: httpd_can_network_connect_db
+    persistent: true
+    state: true
+
+- name: Restore SELinux contexts on web roots
+  ansible.builtin.command: restorecon -RFv "{{ item }}"
+  loop:
+    - "{{ web_root_www }}"
+    - "{{ web_root_wiki }}"
+  changed_when: false
+
+
+- name: Initialize MediaWiki installation
+  ansible.builtin.command:
+    cmd: >
+      php maintenance/install.php
+      --dbname "{{ wiki_db }}"
+      --dbuser "{{ wiki_db_user }}"
+      --dbpass "{{ wiki_db_password }}"
+      --dbserver "{{ hostvars['serverb']['ansible_default_ipv4']['address'] }}"
+      --server "{{ wiki_site_url }}"
+      --scriptpath ""
+      --lang en
+      --pass "{{ wiki_admin_password }}"
+      "NexCore Wiki"
+      "{{ wiki_admin_user }}"
+    chdir: "{{ web_root_wiki }}"
+    creates: "{{ web_root_wiki }}/LocalSettings.php"
+
+
+- name: Enable Apache
+  ansible.builtin.service:
+    name: httpd
+    state: started
+    enabled: true

@@ -1,0 +1,86 @@
+---
+  # DOMAIN
+nexcore_domain: nexcore.local
+
+wiki_fqdn: wiki.nexcore.local
+wordpress_fqdn: www.nexcore.local
+mail_fqdn: mail.nexcore.local
+
+  # SERVER ROLES
+dns_server: servera
+nfs_server: serverb
+
+dns_server_ip: 172.25.250.10
+
+  # SHARE
+shared_disk: /dev/vdb
+shared_vg: vg_shared
+shared_lv: lv_shared
+shared_lv_size: 1G
+
+shared_mount: /mnt/shared
+
+  # USERS
+nexcore_users:
+  - name: ops01
+    groups: ops
+    sudo: true
+
+  - name: dev01
+    groups: dev
+    sudo: false
+
+  - name: dev02
+    groups: dev
+    sudo: false
+
+  - name: mkt01
+    groups: marketing
+    sudo: false
+
+  # SSH KEYS
+# Replace with real staff keys if deployed to production
+nexcore_test_ssh_public_key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJN4m4hK5p1H0k8jzqT8xg8qV2v8q1N0V4lQ7qM0n3Qe test@nexcore"
+nexcore_user_ssh_public_keys:
+  ops01: "{{ nexcore_test_ssh_public_key }}"
+  dev01: "{{ nexcore_test_ssh_public_key }}"
+  dev02: "{{ nexcore_test_ssh_public_key }}"
+  mkt01: "{{ nexcore_test_ssh_public_key }}"
+
+  # WEB & DATABASE
+wordpress_db: wordpress
+wordpress_db_user: wpuser
+wordpress_db_password: Password123!
+
+wordpress_root: /var/www/wordpress
+
+web_root_www: /var/www/www
+
+  
+wiki_db: wikidb
+wiki_db_user: wikiuser
+wiki_db_password: Password123!
+    
+wiki_root: /var/www/wiki
+
+web_root_wiki: /var/www/wiki
+
+wiki_admin_user: wikiadmin
+wiki_admin_password: wikiadminPassword123!
+
+
+  # PORTS
+syslog_port: 514
+smtp_port: 25
+http_port: 80
+https_port: 443
+dns_port: 53
+
+  # MAIL
+mail_server_host: "mail.nexcore.local"
+postfix_mydomain: "{{ nexcore_domain }}"
+postfix_mynetworks: "127.0.0.0/8 [::1]/128"
+
+  # LOG
+health_log: /var/log/nexcore-health.log
+remote_log_dir: /var/log/remote

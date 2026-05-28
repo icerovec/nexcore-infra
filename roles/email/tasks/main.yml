@@ -1,0 +1,39 @@
+---
+- name: Install postfix and mailx
+  ansible.builtin.dnf:
+    name: "{{ mail_packages }}"
+    state: present
+
+
+- name: Configure postfix main.cf
+  ansible.builtin.template:
+    src: main.cf.j2
+    dest: /etc/postfix/main.cf
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart postfix
+
+- name: Enable and start postfix
+  ansible.builtin.service:
+    name: postfix
+    state: started
+    enabled: true
+
+- name: Open SMTP firewall port
+  ansible.posix.firewalld:
+    service: smtp
+    permanent: true
+    state: enabled
+    immediate: true
+
+      
+- name: Configure local aliases for operational mail
+  ansible.builtin.template:
+    src: aliases.j2
+    dest: /etc/aliases
+    owner: root
+    group: root
+    mode: '0644'
+  notify: run newaliases
+

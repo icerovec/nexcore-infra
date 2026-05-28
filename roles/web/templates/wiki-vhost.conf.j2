@@ -1,0 +1,11 @@
+<VirtualHost *:80>
+    ServerName wiki.{{ nexcore_domain }}
+    DocumentRoot "{{ web_root_wiki }}"
+    <Directory "{{ web_root_wiki }}">
+        AllowOverride All
+        Require all granted
+    </Directory>
+    ErrorLog /var/log/httpd/wiki-error.log
+    CustomLog /var/log/httpd/wiki-access.log combined
+</VirtualHost>
+

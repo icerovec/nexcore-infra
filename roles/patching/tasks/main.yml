@@ -1,0 +1,52 @@
+---
+- name: Install maintenance packages
+  ansible.builtin.dnf:
+    name:
+      - logrotate
+      - dnf-automatic
+    state: present
+
+- name: Deploy health check script
+  ansible.builtin.template:
+    src: health-check.sh.j2
+    dest: /usr/local/bin/nexcore-health-check.sh
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Deploy dnf-automatic configuration
+  ansible.builtin.template:
+    src: automatic.conf.j2
+    dest: /etc/dnf/automatic.conf
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Enable dnf automatic install timer
+  ansible.builtin.service:
+    name: dnf-automatic-install.timer
+    state: started
+    enabled: true
+
+- name: Schedule daily health check
+  ansible.builtin.cron:
+    name: "NexCore health check"
+    minute: "0"
+    hour: "3"
+    job: "/usr/local/bin/nexcore-health-check.sh"
+
+- name: Schedule weekly package cache cleanup
+  ansible.builtin.cron:
+    name: "NexCore package cache cleanup"
+    minute: "0"
+    hour: "4"
+    weekday: "0"
+    job: "dnf clean all"
+
+- name: Deploy logrotate config for health log
+  ansible.builtin.template:
+    src: logrotate-nexcore-health.j2
+    dest: /etc/logrotate.d/nexcore-health
+    owner: root
+    group: root
+    mode: "0644"

@@ -1,0 +1,60 @@
+---
+- name: BR-05 User management
+  hosts: all
+  roles:
+    - users
+
+- name: BR-04 Internal DNS
+  hosts: dns
+  roles:
+    - dns
+
+- name: BR-04 Configure DNS clients
+  hosts: all
+  roles:
+    - dns_client
+
+- name: BR-03 Shared storage
+  hosts: nfs
+  roles:
+    - storage
+
+- name: BR-03 Shared storage
+  hosts: all
+  roles:
+    - nfs_client
+
+- name: BR-06 AutoFS mounts
+  hosts: all:!serverb
+  roles:
+    - automount
+
+- name: BR-02 & BR-01 WordPress & WIKI database
+  hosts: db
+  roles:
+    - database
+
+- name: BR-02 & BR-01 WordPress and WIKI web server
+  hosts: web
+  roles:
+    - web
+
+- name: BR-07 Internal mail server
+  hosts: mail
+  roles:
+    - email
+
+- name: BR-08 Security hardening
+  hosts: all
+  roles:
+    - security
+
+- name: BR-09 Centralized logging
+  hosts: all
+  roles:
+    - logging
+
+- name: BR-10 and BR-11 Maintenance
+  hosts: all
+  roles:
+    - patching

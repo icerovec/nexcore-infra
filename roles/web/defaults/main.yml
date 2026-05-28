@@ -1,0 +1,11 @@
+---
+apache_packages:
+  - httpd
+  - php
+  - php-mysqlnd
+  - php-gd
+  - php-intl
+  - php-xml
+  - php-mbstring
+  - wget
+  - tar

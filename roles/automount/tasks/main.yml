@@ -1,0 +1,33 @@
+---
+- name: Install autofs
+  ansible.builtin.dnf:
+    name: 
+      - autofs
+      - nfs-utils
+    state: present
+
+- name: Create Company_Share directories
+  ansible.builtin.file:
+    path: "/home/{{ item.name }}/Company_Share"
+    state: directory
+    owner: "{{ item.name }}"
+    group: "{{ item.groups }}"
+    mode: '0755'
+  loop: "{{ nexcore_users }}"
+
+- name: Configure auto.master
+  ansible.builtin.lineinfile:
+    path: /etc/auto.master
+    line: "/- /etc/auto.company"
+    state: present
+
+- name: Configure automount map
+  ansible.builtin.template:
+    src: auto.company.j2
+    dest: /etc/auto.company
+
+- name: Enable autofs
+  ansible.builtin.service:
+    name: autofs
+    enabled: true
+    state: started

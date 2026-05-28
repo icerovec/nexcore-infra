@@ -1,0 +1,8 @@
+myhostname = {{ mail_fqdn }}
+mydomain = {{ nexcore_domain }}
+myorigin = $mydomain
+inet_protocols = ipv4
+inet_interfaces = all
+mydestination = $myhostname, localhost.$mydomain, localhost, $mydomain
+mynetworks = {{ postfix_mynetworks }}
+
