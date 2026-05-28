@@ -113,6 +113,13 @@
     creates: "{{ web_root_wiki }}/LocalSettings.php"
 
 
+- name: Allow HTTP service
+  ansible.posix.firewalld:
+    service: http
+    permanent: true
+    state: enabled
+    immediate: true
+    
 - name: Enable Apache
   ansible.builtin.service:
     name: httpd
