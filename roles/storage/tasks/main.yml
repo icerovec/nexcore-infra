@@ -21,16 +21,12 @@
   ansible.builtin.filesystem:
     fstype: xfs
     dev: "/dev/{{ shared_vg }}/{{ shared_lv }}"
-    state: present
 
-- name: Create mountpoint
+- name: Create mountpoint directory
   ansible.builtin.file:
     path: "{{ shared_mount }}"
     state: directory
-    owner: root
-    group: dev
-    mode: '0770'
-
+    
 - name: Mount shared volume
   ansible.builtin.mount:
     path: "{{ shared_mount }}"
@@ -38,6 +34,14 @@
     fstype: xfs
     opts: defaults
     state: mounted
+    
+- name: Set mountpoint ownership and permissions
+  ansible.builtin.file:
+    path: "{{ shared_mount }}"
+    state: directory
+    owner: root
+    group: dev
+    mode: '0770'
 
 - name: Create users directory for NFS export
   ansible.builtin.file:
@@ -46,6 +50,15 @@
     owner: root
     group: dev
     mode: '0770'
+
+- name: Create per-user NFS subdirectories
+  ansible.builtin.file:
+    path: "{{ shared_mount }}/users/{{ item.name }}"
+    state: directory
+    owner: "{{ item.name }}"
+    group: "{{ item.groups }}"
+    mode: '0700'
+  loop: "{{ nexcore_users }}"
 
 - name: Configure NFS export
   ansible.builtin.lineinfile:
@@ -77,13 +90,4 @@
     permanent: true
     state: enabled
     immediate: true
-
-- name: Create per-user NFS subdirectories
-  ansible.builtin.file:
-    path: "{{ shared_mount }}/users/{{ item.name }}"
-    state: directory
-    owner: "{{ item.name }}"
-    group: "{{ item.groups }}"
-    mode: '0700'
-  loop: "{{ nexcore_users }}"
 
