@@ -12,7 +12,7 @@
     state: directory
     owner: "{{ item.name }}"
     group: "{{ item.groups }}"
-    mode: '0755'
+    mode: '0700'
   loop: "{{ nexcore_users }}"
 
 - name: Configure auto.master
